@@ -190,6 +190,24 @@ export class CalendarViewComponent implements OnInit {
   }
 
   /**
+   * Convert a pixel position to a time string with half-hour snapping
+   * @param pixelPosition The vertical position in pixels
+   * @returns Time string in HH:MM format
+   */
+  convertPositionToTime(pixelPosition: number): string {
+    // Round to nearest half hour (30px)
+    const roundedPosition = Math.round(pixelPosition / 30) * 30;
+
+    // Calculate hours and minutes
+    const totalMinutes = roundedPosition;
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    // Format as HH:MM
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  }
+
+  /**
    * Calculate the appointment height based on start and end time
    * @param startTime Time string in HH:MM format
    * @param endTime Time string in HH:MM format
@@ -219,6 +237,107 @@ export class CalendarViewComponent implements OnInit {
     }
   }
 
+  /**
+   * Calculate the duration of an appointment in minutes
+   * @param startTime Time string in HH:MM format
+   * @param endTime Time string in HH:MM format
+   * @returns Duration in minutes
+   */
+  calculateDurationInMinutes(startTime: string, endTime: string): number {
+    try {
+      const [startHours, startMinutes] = startTime.split(':').map(n => parseInt(n, 10));
+      const [endHours, endMinutes] = endTime.split(':').map(n => parseInt(n, 10));
+
+      const startTotalMinutes = (startHours * 60) + startMinutes;
+      const endTotalMinutes = (endHours * 60) + endMinutes;
+
+      return endTotalMinutes - startTotalMinutes;
+    } catch (e) {
+      console.error('Error calculating duration', e);
+      return 60; // Default to 1 hour
+    }
+  }
+
+  /**
+   * Handle the cdkDragMoved event to provide visual feedback during dragging
+   */
+  onDragMoved(event: any): void {
+    // This could be used to show visual feedback during dragging
+    // Currently empty as the default drag behavior is sufficient
+  }
+
+  /**
+   * Handle vertical drag ending for time adjustment
+   */
+  onVerticalDragEnded(event: any, appointment: Appointment): void {
+    // Get the vertical distance moved (in pixels)
+    const distanceY = event.distance.y;
+
+    if (Math.abs(distanceY) < 15) {
+      // If movement is minimal, ignore it
+      return;
+    }
+
+    // Hide the element during update
+    const element = event.source.element.nativeElement;
+    element.style.opacity = '0';
+    element.style.transition = 'none';
+
+    // Calculate the original position
+    const originalPosition = this.calculateAppointmentPosition(appointment.startTime);
+
+    // Calculate the new position
+    const newPosition = originalPosition + distanceY;
+
+    // Calculate the new start time with half-hour snapping
+    const newStartTime = this.convertPositionToTime(newPosition);
+
+    // Don't update if the time hasn't changed
+    if (newStartTime === appointment.startTime) {
+      element.style.opacity = '1';
+      element.style.transition = 'opacity 0.3s ease';
+      return;
+    }
+
+    // Calculate the appointment duration in minutes
+    const durationInMinutes = this.calculateDurationInMinutes(appointment.startTime, appointment.endTime);
+
+    // Calculate the new end time by adding the duration to the new start time
+    const [newStartHours, newStartMinutes] = newStartTime.split(':').map(n => parseInt(n, 10));
+    const newEndTotalMinutes = (newStartHours * 60) + newStartMinutes + durationInMinutes;
+    const newEndHours = Math.floor(newEndTotalMinutes / 60);
+    const newEndMinutes = newEndTotalMinutes % 60;
+    const newEndTime = `${newEndHours.toString().padStart(2, '0')}:${newEndMinutes.toString().padStart(2, '0')}`;
+
+    // Apply the update through the service
+    this.appointmentService.updateAppointmentTime(
+      appointment.id,
+      newStartTime,
+      newEndTime
+    ).subscribe(() => {
+      // Show the element at its new position after a small delay
+      setTimeout(() => {
+        element.style.opacity = '1';
+        element.style.transition = 'opacity 0.3s ease';
+      }, 50);
+    });
+  }
+
+  /**
+   * Constrain function for drag operations to maintain the appointment within bounds
+   */
+  constrainPosition(point: any, dragRef: any) {
+    // Only constrain the vertical (y) position
+    // Allow movement only within the day column vertically
+    return {
+      x: point.x, // Keep x position unchanged
+      y: Math.max(0, point.y) // Prevent negative y positions
+    };
+  }
+
+  /**
+   * Handle horizontal drag ending for date change
+   */
   onDrop(event: CdkDragDrop<Date>): void {
     if (event.container.data && event.previousContainer !== event.container) {
       const appointment = event.item.data as Appointment;

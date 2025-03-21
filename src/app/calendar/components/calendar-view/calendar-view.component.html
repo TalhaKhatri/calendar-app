@@ -47,7 +47,7 @@
 
   <!-- Week View -->
   <ng-container *ngIf="currentView === 'week'">
-    <div class="weekdays-header">
+    <div class="weekdays-header week-header">
       <div class="time-column-header"></div>
       <div class="weekday" *ngFor="let date of calendarDays">
         <div class="weekday-name">{{ weekdays[date.getDay()].slice(0, 3) }}</div>
@@ -79,7 +79,13 @@
               [style.position]="'absolute'"
               [style.top.px]="calculateAppointmentPosition(appointment.startTime)"
               [style.height.px]="calculateAppointmentHeight(appointment.startTime, appointment.endTime)"
-              [style.width]="'calc(100% - 8px)'">
+              [style.width]="'calc(100% - 8px)'"
+              (cdkDragMoved)="onDragMoved($event)"
+              (cdkDragEnded)="onVerticalDragEnded($event, appointment)"
+              [cdkDragLockAxis]="'y'"
+              cdkDragBoundary=".day-column"
+              [cdkDragConstrainPosition]="constrainPosition"
+              [cdkDragDisabled]="false">
               <div class="drag-placeholder" *cdkDragPlaceholder></div>
             </app-calendar-cell>
           </ng-container>
@@ -121,7 +127,13 @@
             [style.position]="'absolute'"
             [style.top.px]="calculateAppointmentPosition(appointment.startTime)"
             [style.height.px]="calculateAppointmentHeight(appointment.startTime, appointment.endTime)"
-            [style.width]="'calc(100% - 8px)'">
+            [style.width]="'calc(100% - 8px)'"
+            (cdkDragMoved)="onDragMoved($event)"
+            (cdkDragEnded)="onVerticalDragEnded($event, appointment)"
+            [cdkDragLockAxis]="'y'"
+            cdkDragBoundary=".day-content-column"
+            [cdkDragConstrainPosition]="constrainPosition"
+            [cdkDragDisabled]="false">
             <div class="drag-placeholder" *cdkDragPlaceholder></div>
           </app-calendar-cell>
         </ng-container>

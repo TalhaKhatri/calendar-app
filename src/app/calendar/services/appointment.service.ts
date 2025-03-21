@@ -103,6 +103,30 @@ export class AppointmentService {
     return of(null);
   }
 
+  // Update appointment times (for vertical drag & drop)
+  updateAppointmentTime(id: string, newStartTime: string, newEndTime: string): Observable<Appointment | null> {
+    console.log(`Attempting to update appointment ${id} times to ${newStartTime} - ${newEndTime}`);
+    const index = this.appointments.findIndex(app => app.id === id);
+
+    if (index !== -1) {
+      const updatedAppointment = {
+        ...this.appointments[index],
+        startTime: newStartTime,
+        endTime: newEndTime
+      };
+
+      console.log('Before time update:', this.appointments[index]);
+      this.appointments[index] = updatedAppointment;
+      console.log('After time update:', updatedAppointment);
+
+      this.updateAppointments();
+      return of(updatedAppointment);
+    }
+
+    console.log(`Appointment with id ${id} not found`);
+    return of(null);
+  }
+
   // Save to localStorage and notify subscribers
   private updateAppointments(): void {
     this.appointmentsSubject.next([...this.appointments]);

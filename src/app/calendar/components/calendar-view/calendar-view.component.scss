@@ -48,6 +48,11 @@
   grid-template-columns: repeat(7, 1fr);
 }
 
+/* Week View specific header */
+.week-header {
+  grid-template-columns: 60px repeat(7, 1fr);
+}
+
 .weekday {
   text-align: center;
   font-weight: 500;
