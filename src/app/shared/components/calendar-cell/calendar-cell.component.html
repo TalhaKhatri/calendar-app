@@ -1,0 +1,15 @@
+<mat-card class="appointment-card" [style.borderLeftColor]="appointment.color || '#1976d2'">
+  <mat-card-content>
+    <div class="appointment-title">{{ appointment.title }}</div>
+    <div class="appointment-time">{{ appointment.startTime | formatTime }} - {{ appointment.endTime | formatTime }}</div>
+    <div *ngIf="appointment.description" class="appointment-description">{{ appointment.description }}</div>
+  </mat-card-content>
+  <div class="appointment-actions">
+    <button mat-icon-button color="primary" aria-label="Edit appointment" (click)="editAppointment($event)">
+      <mat-icon>edit</mat-icon>
+    </button>
+    <button mat-icon-button color="warn" aria-label="Delete appointment" (click)="deleteAppointment($event)">
+      <mat-icon>delete</mat-icon>
+    </button>
+  </div>
+</mat-card>

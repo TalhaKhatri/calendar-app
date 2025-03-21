@@ -1,0 +1,14 @@
+<div class="calendar-day" [class.today]="isToday" [class.current-month]="isCurrentMonth">
+  <div class="day-header">
+    <span class="day-number">{{ dayNumber }}</span>
+  </div>
+  <div class="appointments-container">
+    <app-calendar-cell
+      *ngFor="let appointment of appointments"
+      [appointment]="appointment"
+      cdkDrag
+      [cdkDragData]="appointment">
+      <div class="drag-placeholder" *cdkDragPlaceholder></div>
+    </app-calendar-cell>
+  </div>
+</div>

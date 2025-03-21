@@ -1,0 +1,123 @@
+<div class="calendar-container">
+  <div class="calendar-header">
+    <h2>{{ getMonthAndYear() }}</h2>
+    <div class="calendar-controls">
+      <button mat-icon-button aria-label="Previous" (click)="previous()">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      <button mat-button aria-label="Today" (click)="today()">Today</button>
+      <button mat-icon-button aria-label="Next" (click)="next()">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+
+      <div class="view-toggle">
+        <button mat-button [class.active]="currentView === 'month'" (click)="changeView('month')">Month</button>
+        <button mat-button [class.active]="currentView === 'week'" (click)="changeView('week')">Week</button>
+        <button mat-button [class.active]="currentView === 'day'" (click)="changeView('day')">Day</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Month View -->
+  <ng-container *ngIf="currentView === 'month'">
+    <div class="weekdays-header">
+      <div class="weekday" *ngFor="let day of weekdays">{{ day.slice(0, 3) }}</div>
+    </div>
+
+    <div class="calendar-grid" cdkDropListGroup>
+      <div
+        *ngFor="let date of calendarDays"
+        class="calendar-cell"
+        [id]="'day-' + date.getTime()"
+        [cdkDropListData]="date"
+        cdkDropList
+        [cdkDropListSortingDisabled]="true"
+        (cdkDropListDropped)="onDrop($event)">
+        <ng-container *ngIf="getAppointmentsForDate(date) | async as dateAppointments">
+          <app-calendar-day
+            [date]="date"
+            [appointments]="dateAppointments"
+            [isToday]="isToday(date)"
+            [isCurrentMonth]="isCurrentMonth(date)">
+          </app-calendar-day>
+        </ng-container>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Week View -->
+  <ng-container *ngIf="currentView === 'week'">
+    <div class="weekdays-header">
+      <div class="time-column-header"></div>
+      <div class="weekday" *ngFor="let date of calendarDays">
+        <div class="weekday-name">{{ weekdays[date.getDay()].slice(0, 3) }}</div>
+        <div class="weekday-date" [class.today]="isToday(date)">{{ date.getDate() }}</div>
+      </div>
+    </div>
+
+    <div class="week-view-grid" cdkDropListGroup>
+      <div class="time-slots">
+        <div class="time-slot" *ngFor="let hour of hourSlots">
+          {{ hour }}
+        </div>
+      </div>
+
+      <div class="week-day-column" *ngFor="let date of calendarDays">
+        <div
+          class="day-column"
+          [id]="'day-' + date.getTime()"
+          [cdkDropListData]="date"
+          cdkDropList
+          [cdkDropListSortingDisabled]="true"
+          (cdkDropListDropped)="onDrop($event)">
+          <ng-container *ngIf="getAppointmentsForDate(date) | async as dateAppointments">
+            <app-calendar-cell
+              *ngFor="let appointment of dateAppointments"
+              [appointment]="appointment"
+              cdkDrag
+              [cdkDragData]="appointment">
+              <div class="drag-placeholder" *cdkDragPlaceholder></div>
+            </app-calendar-cell>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Day View -->
+  <ng-container *ngIf="currentView === 'day'">
+    <div class="day-view-header">
+      <div class="time-column-header"></div>
+      <div class="day-column-header">
+        <div class="weekday-name">{{ weekdays[currentDate.getDay()] }}</div>
+        <div class="weekday-date" [class.today]="isToday(currentDate)">{{ currentDate.getDate() }}</div>
+      </div>
+    </div>
+
+    <div class="day-view-grid" cdkDropListGroup>
+      <div class="time-slots">
+        <div class="time-slot" *ngFor="let hour of hourSlots">
+          {{ hour }}
+        </div>
+      </div>
+
+      <div
+        class="day-content-column"
+        [id]="'day-' + currentDate.getTime()"
+        [cdkDropListData]="currentDate"
+        cdkDropList
+        [cdkDropListSortingDisabled]="true"
+        (cdkDropListDropped)="onDrop($event)">
+        <ng-container *ngIf="getAppointmentsForDate(currentDate) | async as dateAppointments">
+          <app-calendar-cell
+            *ngFor="let appointment of dateAppointments"
+            [appointment]="appointment"
+            cdkDrag
+            [cdkDragData]="appointment">
+            <div class="drag-placeholder" *cdkDragPlaceholder></div>
+          </app-calendar-cell>
+        </ng-container>
+      </div>
+    </div>
+  </ng-container>
+</div>

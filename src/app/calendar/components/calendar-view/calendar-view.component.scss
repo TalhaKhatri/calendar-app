@@ -1,0 +1,198 @@
+.calendar-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 100px); /* Adjust to account for header */
+  max-height: calc(100vh - 100px);
+  overflow: hidden;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+
+  h2 {
+    margin: 0;
+  }
+}
+
+.calendar-controls {
+  display: flex;
+  align-items: center;
+}
+
+.view-toggle {
+  margin-left: 16px;
+
+  button {
+    min-width: 60px;
+
+    &.active {
+      background-color: rgba(0, 0, 0, 0.1);
+      font-weight: 500;
+    }
+  }
+}
+
+/* Common styles for headers */
+.weekdays-header, .day-view-header {
+  display: grid;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+/* Month View Styles */
+.weekdays-header {
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.weekday {
+  text-align: center;
+  font-weight: 500;
+  padding: 8px;
+
+  .weekday-name {
+    font-size: 12px;
+    text-transform: uppercase;
+  }
+
+  .weekday-date {
+    font-size: 16px;
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+    border-radius: 50%;
+    margin: 4px auto 0;
+
+    &.today {
+      background-color: #1976d2;
+      color: white;
+    }
+  }
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 1fr;
+  gap: 4px;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0; /* Important for Firefox */
+}
+
+.calendar-cell {
+  position: relative;
+  min-height: 100px;
+  height: 100%;
+}
+
+/* Week View Styles */
+.week-view-grid {
+  display: grid;
+  grid-template-columns: 60px repeat(7, 1fr);
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.time-column-header {
+  width: 60px;
+}
+
+.time-slots {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #e0e0e0;
+}
+
+.time-slot {
+  height: 60px;
+  padding: 5px;
+  text-align: right;
+  font-size: 12px;
+  color: #757575;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.week-day-column {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #e0e0e0;
+
+  &:last-child {
+    border-right: none;
+  }
+}
+
+.day-column {
+  flex: 1;
+  min-height: 1440px; /* 24 hours * 60px */
+  position: relative;
+  background: linear-gradient(to bottom, #f9f9f9 1px, transparent 1px);
+  background-size: 100% 60px;
+}
+
+/* Day View Styles */
+.day-view-header {
+  grid-template-columns: 60px 1fr;
+}
+
+.day-column-header {
+  text-align: center;
+  padding: 8px;
+
+  .weekday-name {
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  .weekday-date {
+    font-size: 32px;
+    width: 48px;
+    height: 48px;
+    line-height: 48px;
+    border-radius: 50%;
+    margin: 8px auto 0;
+
+    &.today {
+      background-color: #1976d2;
+      color: white;
+    }
+  }
+}
+
+.day-view-grid {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.day-content-column {
+  min-height: 1440px; /* 24 hours * 60px */
+  position: relative;
+  background: linear-gradient(to bottom, #f9f9f9 1px, transparent 1px);
+  background-size: 100% 60px;
+}
+
+/* Fix for drag operation to maintain cell dimensions */
+.cdk-drag-preview {
+  z-index: 9999;
+}
+
+.cdk-drop-list-dragging .calendar-cell {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.drag-placeholder {
+  background: #ccc;
+  border: dotted 1px #999;
+  min-height: 50px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
