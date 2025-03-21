@@ -115,6 +115,8 @@
   font-size: 12px;
   color: #757575;
   border-bottom: 1px solid #f0f0f0;
+  box-sizing: border-box;
+  line-height: 1;
 }
 
 .week-day-column {
@@ -127,12 +129,18 @@
   }
 }
 
-.day-column {
-  flex: 1;
+.day-column, .day-content-column {
   min-height: 1440px; /* 24 hours * 60px */
   position: relative;
   background: linear-gradient(to bottom, #f9f9f9 1px, transparent 1px);
   background-size: 100% 60px;
+  background-position: 0 0;
+
+  /* Add some padding for better visual appearance */
+  padding: 0 4px;
+
+  /* Add overflow hidden to ensure appointments stay within their container */
+  overflow: hidden;
 }
 
 /* Day View Styles */
@@ -177,6 +185,12 @@
   position: relative;
   background: linear-gradient(to bottom, #f9f9f9 1px, transparent 1px);
   background-size: 100% 60px;
+
+  /* Add some padding for better visual appearance */
+  padding: 0 4px;
+
+  /* Add overflow hidden to ensure appointments stay within their container */
+  overflow: hidden;
 }
 
 /* Fix for drag operation to maintain cell dimensions */

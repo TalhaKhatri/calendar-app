@@ -11,8 +11,8 @@
       </button>
 
       <div class="view-toggle">
-        <button mat-button [class.active]="currentView === 'month'" (click)="changeView('month')">Month</button>
-        <button mat-button [class.active]="currentView === 'week'" (click)="changeView('week')">Week</button>
+        <button mat-button [class.active]="currentView === 'month'" (click)="changeView('month')" style="margin-right: 8px;">Month</button>
+        <button mat-button [class.active]="currentView === 'week'" (click)="changeView('week')" style="margin-right: 8px;">Week</button>
         <button mat-button [class.active]="currentView === 'day'" (click)="changeView('day')">Day</button>
       </div>
     </div>
@@ -75,7 +75,11 @@
               *ngFor="let appointment of dateAppointments"
               [appointment]="appointment"
               cdkDrag
-              [cdkDragData]="appointment">
+              [cdkDragData]="appointment"
+              [style.position]="'absolute'"
+              [style.top.px]="calculateAppointmentPosition(appointment.startTime)"
+              [style.height.px]="calculateAppointmentHeight(appointment.startTime, appointment.endTime)"
+              [style.width]="'calc(100% - 8px)'">
               <div class="drag-placeholder" *cdkDragPlaceholder></div>
             </app-calendar-cell>
           </ng-container>
@@ -113,7 +117,11 @@
             *ngFor="let appointment of dateAppointments"
             [appointment]="appointment"
             cdkDrag
-            [cdkDragData]="appointment">
+            [cdkDragData]="appointment"
+            [style.position]="'absolute'"
+            [style.top.px]="calculateAppointmentPosition(appointment.startTime)"
+            [style.height.px]="calculateAppointmentHeight(appointment.startTime, appointment.endTime)"
+            [style.width]="'calc(100% - 8px)'">
             <div class="drag-placeholder" *cdkDragPlaceholder></div>
           </app-calendar-cell>
         </ng-container>

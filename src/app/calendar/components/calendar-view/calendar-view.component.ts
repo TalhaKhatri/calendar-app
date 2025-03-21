@@ -163,6 +163,62 @@ export class CalendarViewComponent implements OnInit {
     );
   }
 
+  /**
+   * Calculate the top position for an appointment based on its start time
+   * @param startTime Time string in HH:MM format
+   * @returns CSS top position in pixels
+   */
+  calculateAppointmentPosition(startTime: string): number {
+    try {
+      const [hoursStr, minutesStr] = startTime.split(':');
+      const hours = parseInt(hoursStr, 10);
+      const minutes = parseInt(minutesStr, 10);
+
+      if (isNaN(hours) || isNaN(minutes)) {
+        console.log('Invalid time format:', startTime);
+        return 0;
+      }
+
+      // Position should be hours * 60px (for each hour slot) + the minutes percentage of 60px
+      const position = (hours * 60) + ((minutes / 60) * 60);
+      console.log(`Position for ${startTime}: ${position}px (${hours} hours, ${minutes} minutes)`);
+      return position;
+    } catch (e) {
+      console.error('Error calculating appointment position', e);
+      return 0;
+    }
+  }
+
+  /**
+   * Calculate the appointment height based on start and end time
+   * @param startTime Time string in HH:MM format
+   * @param endTime Time string in HH:MM format
+   * @returns CSS height in pixels
+   */
+  calculateAppointmentHeight(startTime: string, endTime: string): number {
+    try {
+      const [startHours, startMinutes] = startTime.split(':').map(Number);
+      const [endHours, endMinutes] = endTime.split(':').map(Number);
+
+      if (isNaN(startHours) || isNaN(startMinutes) || isNaN(endHours) || isNaN(endMinutes)) {
+        return 60; // Default to 1 hour height
+      }
+
+      // Calculate total minutes
+      const startTotalMinutes = (startHours * 60) + startMinutes;
+      const endTotalMinutes = (endHours * 60) + endMinutes;
+
+      // Calculate difference in minutes, with minimum height of 30px
+      const heightInMinutes = Math.max(30, endTotalMinutes - startTotalMinutes);
+
+      // Convert to pixels (1 minute = 1px)
+      return heightInMinutes;
+    } catch (e) {
+      console.error('Error calculating appointment height', e);
+      return 60; // Default to 1 hour height
+    }
+  }
+
   onDrop(event: CdkDragDrop<Date>): void {
     if (event.container.data && event.previousContainer !== event.container) {
       const appointment = event.item.data as Appointment;

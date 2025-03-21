@@ -15,10 +15,8 @@ export class FormatTimePipe implements PipeTransform {
         return value;
       }
 
-      const period = hours >= 12 ? 'PM' : 'AM';
-      const displayHours = hours % 12 || 12; // Convert 0 to 12 for display
-
-      return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+      // Return in 24-hour format (HH:MM)
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
     } catch (e) {
       return value;
     }
