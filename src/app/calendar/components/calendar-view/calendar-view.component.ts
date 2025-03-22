@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AppointmentService } from '../../services/appointment.service';
 import { Appointment } from '../../../shared/models/appointment.model';
-import { CdkDragDrop } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, CdkDragMove, CdkDragStart, Point } from '@angular/cdk/drag-drop';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -21,6 +21,13 @@ export class CalendarViewComponent implements OnInit {
   // View type and time slots
   currentView: CalendarViewType = 'month';
   hourSlots: string[] = [];
+
+  // Variables to track drag information
+  private dragStartY = 0;
+  private initialAppointmentPosition = 0;
+  private currentAppointment: Appointment | null = null;
+  private dragStartPosition: { x: number, y: number } = { x: 0, y: 0 };
+  private dragStartElement: HTMLElement | null = null;
 
   constructor(private appointmentService: AppointmentService) {
     this.appointments$ = this.appointmentService.getAppointments();
@@ -190,24 +197,6 @@ export class CalendarViewComponent implements OnInit {
   }
 
   /**
-   * Convert a pixel position to a time string with half-hour snapping
-   * @param pixelPosition The vertical position in pixels
-   * @returns Time string in HH:MM format
-   */
-  convertPositionToTime(pixelPosition: number): string {
-    // Round to nearest half hour (30px)
-    const roundedPosition = Math.round(pixelPosition / 30) * 30;
-
-    // Calculate hours and minutes
-    const totalMinutes = roundedPosition;
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-
-    // Format as HH:MM
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-  }
-
-  /**
    * Calculate the appointment height based on start and end time
    * @param startTime Time string in HH:MM format
    * @param endTime Time string in HH:MM format
@@ -238,135 +227,194 @@ export class CalendarViewComponent implements OnInit {
   }
 
   /**
-   * Calculate the duration of an appointment in minutes
-   * @param startTime Time string in HH:MM format
-   * @param endTime Time string in HH:MM format
-   * @returns Duration in minutes
+   * Store the initial position when drag starts
    */
-  calculateDurationInMinutes(startTime: string, endTime: string): number {
-    try {
-      const [startHours, startMinutes] = startTime.split(':').map(n => parseInt(n, 10));
-      const [endHours, endMinutes] = endTime.split(':').map(n => parseInt(n, 10));
+  dragStarted(event: CdkDragStart, appointment: Appointment): void {
+    // Get the dragging element and its initial position
+    this.dragStartElement = event.source.element.nativeElement;
+    const rect = this.dragStartElement.getBoundingClientRect();
 
-      const startTotalMinutes = (startHours * 60) + startMinutes;
-      const endTotalMinutes = (endHours * 60) + endMinutes;
-
-      return endTotalMinutes - startTotalMinutes;
-    } catch (e) {
-      console.error('Error calculating duration', e);
-      return 60; // Default to 1 hour
-    }
-  }
-
-  /**
-   * Handle the cdkDragMoved event to provide visual feedback during dragging
-   */
-  onDragMoved(event: any): void {
-    // This could be used to show visual feedback during dragging
-    // Currently empty as the default drag behavior is sufficient
-  }
-
-  /**
-   * Handle vertical drag ending for time adjustment
-   */
-  onVerticalDragEnded(event: any, appointment: Appointment): void {
-    // Get the vertical distance moved (in pixels)
-    const distanceY = event.distance.y;
-
-    if (Math.abs(distanceY) < 15) {
-      // If movement is minimal, ignore it
-      return;
-    }
-
-    // Hide the element during update
-    const element = event.source.element.nativeElement;
-    element.style.opacity = '0';
-    element.style.transition = 'none';
-
-    // Calculate the original position
-    const originalPosition = this.calculateAppointmentPosition(appointment.startTime);
-
-    // Calculate the new position
-    const newPosition = originalPosition + distanceY;
-
-    // Calculate the new start time with half-hour snapping
-    const newStartTime = this.convertPositionToTime(newPosition);
-
-    // Don't update if the time hasn't changed
-    if (newStartTime === appointment.startTime) {
-      element.style.opacity = '1';
-      element.style.transition = 'opacity 0.3s ease';
-      return;
-    }
-
-    // Calculate the appointment duration in minutes
-    const durationInMinutes = this.calculateDurationInMinutes(appointment.startTime, appointment.endTime);
-
-    // Calculate the new end time by adding the duration to the new start time
-    const [newStartHours, newStartMinutes] = newStartTime.split(':').map(n => parseInt(n, 10));
-    const newEndTotalMinutes = (newStartHours * 60) + newStartMinutes + durationInMinutes;
-    const newEndHours = Math.floor(newEndTotalMinutes / 60);
-    const newEndMinutes = newEndTotalMinutes % 60;
-    const newEndTime = `${newEndHours.toString().padStart(2, '0')}:${newEndMinutes.toString().padStart(2, '0')}`;
-
-    // Apply the update through the service
-    this.appointmentService.updateAppointmentTime(
-      appointment.id,
-      newStartTime,
-      newEndTime
-    ).subscribe(() => {
-      // Show the element at its new position after a small delay
-      setTimeout(() => {
-        element.style.opacity = '1';
-        element.style.transition = 'opacity 0.3s ease';
-      }, 50);
-    });
-  }
-
-  /**
-   * Constrain function for drag operations to maintain the appointment within bounds
-   */
-  constrainPosition(point: any, dragRef: any) {
-    // Only constrain the vertical (y) position
-    // Allow movement only within the day column vertically
-    return {
-      x: point.x, // Keep x position unchanged
-      y: Math.max(0, point.y) // Prevent negative y positions
+    // Store initial position information
+    this.dragStartPosition = {
+      x: rect.left,
+      y: rect.top
     };
+
+    this.dragStartY = event.source.getFreeDragPosition().y;
+    this.initialAppointmentPosition = this.calculateAppointmentPosition(appointment.startTime);
+    this.currentAppointment = appointment;
+
+    // Add a class to the source element to help with styling during drag
+    event.source.element.nativeElement.classList.add('dragging');
+
+    // Add a class to the body to indicate dragging for styling purposes
+    document.body.classList.add('appointment-dragging');
+
+    // Attempt to disable any transitions that might cause floating
+    setTimeout(() => {
+      const preview = document.querySelector('.cdk-drag-preview') as HTMLElement;
+      if (preview) {
+        preview.classList.add('no-transition');
+        preview.style.transition = 'none';
+        preview.style.transform = 'none';
+      }
+    }, 0);
   }
 
   /**
-   * Handle horizontal drag ending for date change
+   * Constraint function to snap appointment to half-hour intervals
+   * This function keeps the vertical position aligned with time slots
    */
+  constrainPosition = (point: Point, dragRef: any): Point => {
+    if (!this.currentAppointment) {
+      return point;
+    }
+
+    // Allow horizontal movement freely for cross-container dragging
+    // We don't constrain X to allow moving between days
+
+    // For vertical movement, snap to half-hour intervals
+    const yOffset = point.y - this.dragStartY;
+    const halfHourPixels = 30; // 30px represents 30 minutes
+    const snappedYOffset = Math.round(yOffset / halfHourPixels) * halfHourPixels;
+
+    // Calculate the new constrained Y position
+    const newY = snappedYOffset;
+
+    return { x: point.x, y: newY };
+  }
+
   onDrop(event: CdkDragDrop<Date>): void {
+    // Remove the drag classes
+    document.body.classList.remove('appointment-dragging');
+    if (this.dragStartElement) {
+      this.dragStartElement.classList.remove('dragging');
+      this.dragStartElement = null;
+    }
+
+    const appointment = event.item.data as Appointment;
+
+    if (!appointment) {
+      return;
+    }
+
+    // Handle cross-container drops (day to day movement)
     if (event.container.data && event.previousContainer !== event.container) {
-      const appointment = event.item.data as Appointment;
+      const newDate = new Date(event.container.data);
 
-      if (appointment) {
-        const newDate = new Date(event.container.data);
+      // Create a new Date that preserves the original time but changes the date
+      const updatedDate = new Date(
+        newDate.getFullYear(),
+        newDate.getMonth(),
+        newDate.getDate(),
+        new Date(appointment.date).getHours(),
+        new Date(appointment.date).getMinutes()
+      );
 
-        // Create a new Date that preserves the original time but changes the date
-        const updatedDate = new Date(
-          newDate.getFullYear(),
-          newDate.getMonth(),
-          newDate.getDate(),
-          new Date(appointment.date).getHours(),
-          new Date(appointment.date).getMinutes()
-        );
+      console.log(`Moving appointment from ${appointment.date} to ${updatedDate}`);
 
-        console.log(`Moving appointment from ${appointment.date} to ${updatedDate}`);
+      this.appointmentService.moveAppointment(appointment.id, updatedDate).subscribe(
+        result => {
+          if (result) {
+            console.log('Appointment moved successfully');
+          } else {
+            console.error('Failed to move appointment');
+          }
+        },
+        error => console.error('Error moving appointment', error)
+      );
+    }
+    // Handle time change (vertical movement within same container)
+    else if (event.container === event.previousContainer) {
+      // Get the vertical displacement
+      const yOffset = event.distance.y;
 
-        this.appointmentService.moveAppointment(appointment.id, updatedDate).subscribe(
-          result => {
-            if (result) {
-              console.log('Appointment moved successfully');
-            } else {
-              console.error('Failed to move appointment');
-            }
-          },
-          error => console.error('Error moving appointment', error)
-        );
+      if (Math.abs(yOffset) < 15) {
+        return; // Ignore very small movements
       }
+
+      // Calculate the time change in half-hour increments
+      const halfHourPixels = 30; // 30px represents 30 minutes
+      const halfHourIncrements = Math.round(yOffset / halfHourPixels);
+
+      if (halfHourIncrements === 0) {
+        return; // No significant movement to trigger a time change
+      }
+
+      // Get the current start and end times
+      const [startHours, startMinutes] = appointment.startTime.split(':').map(Number);
+      const [endHours, endMinutes] = appointment.endTime.split(':').map(Number);
+
+      // Calculate new times in minutes, adding the half-hour increments
+      let newStartTotalMinutes = (startHours * 60 + startMinutes) + (halfHourIncrements * 30);
+      let newEndTotalMinutes = (endHours * 60 + endMinutes) + (halfHourIncrements * 30);
+
+      // Ensure times don't go below 0 or above 24 hours
+      if (newStartTotalMinutes < 0) {
+        const offset = newStartTotalMinutes;
+        newStartTotalMinutes = 0;
+        newEndTotalMinutes -= offset; // Keep the duration the same
+      }
+
+      if (newEndTotalMinutes > 24 * 60) {
+        const excess = newEndTotalMinutes - (24 * 60);
+        newEndTotalMinutes = 24 * 60;
+        newStartTotalMinutes = Math.max(0, newStartTotalMinutes - excess); // Keep the duration the same
+      }
+
+      // Convert back to hours and minutes
+      const newStartHours = Math.floor(newStartTotalMinutes / 60);
+      const newStartMinutes = newStartTotalMinutes % 60;
+      const newEndHours = Math.floor(newEndTotalMinutes / 60);
+      const newEndMinutes = newEndTotalMinutes % 60;
+
+      // Format the new times
+      const newStartTime = `${newStartHours.toString().padStart(2, '0')}:${newStartMinutes.toString().padStart(2, '0')}`;
+      const newEndTime = `${newEndHours.toString().padStart(2, '0')}:${newEndMinutes.toString().padStart(2, '0')}`;
+
+      console.log(`Changing appointment time from ${appointment.startTime}-${appointment.endTime} to ${newStartTime}-${newEndTime}`);
+
+      // Clone the appointment and update the times
+      const updatedAppointment: Appointment = {
+        ...appointment,
+        startTime: newStartTime,
+        endTime: newEndTime
+      };
+
+      // Update the appointment
+      this.appointmentService.updateAppointment(updatedAppointment).subscribe(
+        result => {
+          if (result) {
+            console.log('Appointment time updated successfully');
+          } else {
+            console.error('Failed to update appointment time');
+          }
+        },
+        error => console.error('Error updating appointment time', error)
+      );
+    }
+
+    // Reset drag tracking variables
+    this.currentAppointment = null;
+    this.dragStartPosition = { x: 0, y: 0 };
+  }
+
+  /**
+   * Handle drag movement
+   */
+  dragMoved(event: CdkDragMove<any>): void {
+    // Get preview element (if available)
+    const preview = document.querySelector('.cdk-drag-preview') as HTMLElement;
+    if (preview) {
+      // Add a custom class to help with styling
+      preview.classList.add('dragging-appointment');
+
+      // Apply immediate positioning to prevent float animation
+      preview.style.transition = 'none';
+
+      // Ensure the preview maintains the correct appearance
+      preview.style.opacity = '0.9';
+      preview.style.boxShadow = '0 5px 5px -3px rgba(0, 0, 0, 0.2), 0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12)';
     }
   }
 }

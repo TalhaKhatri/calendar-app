@@ -7,8 +7,19 @@
       *ngFor="let appointment of appointments"
       [appointment]="appointment"
       cdkDrag
-      [cdkDragData]="appointment">
+      [cdkDragData]="appointment"
+      (cdkDragStarted)="onDragStarted($event, appointment)"
+      (cdkDragMoved)="onDragMoved($event)">
       <div class="drag-placeholder" *cdkDragPlaceholder></div>
+
+      <!-- Custom drag preview to prevent jumping -->
+      <ng-template cdkDragPreview [matchSize]="true" [cdkDragPreviewOffset]="{x: 0, y: 0}">
+        <div class="no-transition">
+          <app-calendar-cell
+            [appointment]="appointment">
+          </app-calendar-cell>
+        </div>
+      </ng-template>
     </app-calendar-cell>
   </div>
 </div>

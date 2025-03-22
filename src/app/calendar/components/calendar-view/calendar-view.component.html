@@ -76,17 +76,24 @@
               [appointment]="appointment"
               cdkDrag
               [cdkDragData]="appointment"
+              (cdkDragStarted)="dragStarted($event, appointment)"
+              (cdkDragMoved)="dragMoved($event)"
               [style.position]="'absolute'"
               [style.top.px]="calculateAppointmentPosition(appointment.startTime)"
               [style.height.px]="calculateAppointmentHeight(appointment.startTime, appointment.endTime)"
-              [style.width]="'calc(100% - 8px)'"
-              (cdkDragMoved)="onDragMoved($event)"
-              (cdkDragEnded)="onVerticalDragEnded($event, appointment)"
-              [cdkDragLockAxis]="'y'"
-              cdkDragBoundary=".day-column"
-              [cdkDragConstrainPosition]="constrainPosition"
-              [cdkDragDisabled]="false">
+              [style.width]="'calc(100% - 8px)'">
               <div class="drag-placeholder" *cdkDragPlaceholder></div>
+
+              <!-- Use custom drag preview with better initial positioning -->
+              <ng-template cdkDragPreview [matchSize]="true" [cdkDragPreviewOffset]="{x: 0, y: 0}">
+                <div class="no-transition">
+                  <app-calendar-cell
+                    [appointment]="appointment"
+                    [style.height.px]="calculateAppointmentHeight(appointment.startTime, appointment.endTime)"
+                    [style.width]="'calc(100% - 8px)'">
+                  </app-calendar-cell>
+                </div>
+              </ng-template>
             </app-calendar-cell>
           </ng-container>
         </div>
@@ -124,17 +131,25 @@
             [appointment]="appointment"
             cdkDrag
             [cdkDragData]="appointment"
+            cdkDragBoundary=".day-content-column"
+            (cdkDragStarted)="dragStarted($event, appointment)"
+            (cdkDragMoved)="dragMoved($event)"
             [style.position]="'absolute'"
             [style.top.px]="calculateAppointmentPosition(appointment.startTime)"
             [style.height.px]="calculateAppointmentHeight(appointment.startTime, appointment.endTime)"
-            [style.width]="'calc(100% - 8px)'"
-            (cdkDragMoved)="onDragMoved($event)"
-            (cdkDragEnded)="onVerticalDragEnded($event, appointment)"
-            [cdkDragLockAxis]="'y'"
-            cdkDragBoundary=".day-content-column"
-            [cdkDragConstrainPosition]="constrainPosition"
-            [cdkDragDisabled]="false">
+            [style.width]="'calc(100% - 8px)'">
             <div class="drag-placeholder" *cdkDragPlaceholder></div>
+
+            <!-- Use custom drag preview with better initial positioning -->
+            <ng-template cdkDragPreview [matchSize]="true" [cdkDragPreviewOffset]="{x: 0, y: 0}">
+              <div class="no-transition">
+                <app-calendar-cell
+                  [appointment]="appointment"
+                  [style.height.px]="calculateAppointmentHeight(appointment.startTime, appointment.endTime)"
+                  [style.width]="'calc(100% - 8px)'">
+                </app-calendar-cell>
+              </div>
+            </ng-template>
           </app-calendar-cell>
         </ng-container>
       </div>

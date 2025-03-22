@@ -198,20 +198,86 @@
   overflow: hidden;
 }
 
-/* Fix for drag operation to maintain cell dimensions */
+/* Drag and drop styles */
 .cdk-drag-preview {
+  box-sizing: border-box;
+  border-radius: 4px;
+  box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+              0 8px 10px 1px rgba(0, 0, 0, 0.14),
+              0 3px 14px 2px rgba(0, 0, 0, 0.12);
+  opacity: 0.9;
   z-index: 9999;
+  background-color: #fff;
+  pointer-events: none;
+  /* Disable transitions for immediate positioning */
+  transition: none !important;
 }
 
-.cdk-drop-list-dragging .calendar-cell {
-  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+/* Drag placeholder and drop styling */
+.cdk-drag-placeholder {
+  opacity: 0;
+}
+
+.cdk-drag-animating {
+  transition: none !important;
 }
 
 .drag-placeholder {
-  background: #ccc;
-  border: dotted 1px #999;
-  min-height: 50px;
+  background: #eee;
+  border: dashed 1px #ccc;
+  min-height: 30px;
   width: 100%;
   box-sizing: border-box;
   transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* Class added to body during drag operations */
+.appointment-dragging {
+  cursor: grabbing !important;
+}
+
+/* Style for the element being dragged */
+.dragging {
+  opacity: 0.4;
+}
+
+/* Add a nice shadow to the preview */
+.cdk-drag-preview app-calendar-cell {
+  box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+              0 8px 10px 1px rgba(0, 0, 0, 0.14),
+              0 3px 14px 2px rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  background-color: #fff;
+}
+
+/* Time guides for half-hour intervals */
+.day-column::after,
+.day-content-column::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, transparent 29px, rgba(0, 0, 0, 0.05) 30px, transparent 31px);
+  background-size: 100% 60px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Adding helper class to indicate an item is being dragged vertically */
+.vertical-dragging {
+  opacity: 0.85;
+  cursor: grabbing !important;
+}
+
+.dragging-appointment {
+  cursor: grabbing !important;
+}
+
+/* Add this new rule to prevent any unwanted animations */
+.no-transition,
+.no-transition * {
+  transition: none !important;
+  animation: none !important;
 }
