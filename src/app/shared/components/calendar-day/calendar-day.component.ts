@@ -1,6 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Appointment } from '../../models/appointment.model';
 import { CdkDragMove, CdkDragStart } from '@angular/cdk/drag-drop';
+import { DateService } from '../../services/date.service';
+import { DragDropService } from '../../services/drag-drop.service';
 
 @Component({
   selector: 'app-calendar-day',
@@ -13,12 +15,13 @@ export class CalendarDayComponent implements OnInit {
   @Input() isToday = false;
   @Input() isCurrentMonth = true;
 
-  // Element being dragged
-  private dragStartElement: HTMLElement | null = null;
-
-  constructor() { }
+  constructor(
+    private dateService: DateService,
+    private dragDropService: DragDropService
+  ) {}
 
   ngOnInit(): void {
+    // Component initialization code if needed
   }
 
   get dayNumber(): number {
@@ -26,44 +29,16 @@ export class CalendarDayComponent implements OnInit {
   }
 
   /**
-   * Handle drag start event
+   * Delegate drag start handling to the DragDropService
    */
   onDragStarted(event: CdkDragStart, appointment: Appointment): void {
-    // Get the dragging element
-    this.dragStartElement = event.source.element.nativeElement;
-
-    // Add a class to the source element to help with styling during drag
-    this.dragStartElement.classList.add('dragging');
-
-    // Add a class to the body to indicate dragging for styling purposes
-    document.body.classList.add('appointment-dragging');
-
-    // Disable transitions on preview
-    setTimeout(() => {
-      const preview = document.querySelector('.cdk-drag-preview') as HTMLElement;
-      if (preview) {
-        preview.classList.add('no-transition');
-        preview.style.transition = 'none';
-        preview.style.transform = 'none';
-      }
-    }, 0);
+    this.dragDropService.onDragStarted(event, appointment);
   }
 
   /**
-   * Handle drag move event
+   * Delegate drag move handling to the DragDropService
    */
   onDragMoved(event: CdkDragMove<any>): void {
-    // Get preview element (if available)
-    const preview = document.querySelector('.cdk-drag-preview') as HTMLElement;
-    if (preview) {
-      // Add a custom class to help with styling
-      preview.classList.add('dragging-appointment');
-
-      // Apply immediate positioning to prevent float animation
-      preview.style.transition = 'none';
-
-      // Ensure the preview maintains the correct appearance
-      preview.style.opacity = '0.9';
-    }
+    this.dragDropService.onDragMoved(event);
   }
 }

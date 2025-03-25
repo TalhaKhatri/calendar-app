@@ -1,6 +1,6 @@
 <div class="calendar-container">
   <div class="calendar-header">
-    <h2>{{ getMonthAndYear() }}</h2>
+    <h2>{{ monthAndYear$ | async }}</h2>
     <div class="calendar-controls">
       <button mat-icon-button aria-label="Previous" (click)="previous()">
         <mat-icon>chevron_left</mat-icon>
@@ -106,8 +106,10 @@
     <div class="day-view-header">
       <div class="time-column-header"></div>
       <div class="day-column-header">
-        <div class="weekday-name">{{ weekdays[currentDate.getDay()] }}</div>
-        <div class="weekday-date" [class.today]="isToday(currentDate)">{{ currentDate.getDate() }}</div>
+        <ng-container *ngIf="currentDate$ | async as currentDate">
+          <div class="weekday-name">{{ weekdays[currentDate.getDay()] }}</div>
+          <div class="weekday-date" [class.today]="isToday(currentDate)">{{ currentDate.getDate() }}</div>
+        </ng-container>
       </div>
     </div>
 
@@ -118,41 +120,43 @@
         </div>
       </div>
 
-      <div
-        class="day-content-column"
-        [id]="'day-' + currentDate.getTime()"
-        [cdkDropListData]="currentDate"
-        cdkDropList
-        [cdkDropListSortingDisabled]="true"
-        (cdkDropListDropped)="onDrop($event)">
-        <ng-container *ngIf="getAppointmentsForDate(currentDate) | async as dateAppointments">
-          <app-calendar-cell
-            *ngFor="let appointment of dateAppointments"
-            [appointment]="appointment"
-            cdkDrag
-            [cdkDragData]="appointment"
-            cdkDragBoundary=".day-content-column"
-            (cdkDragStarted)="dragStarted($event, appointment)"
-            (cdkDragMoved)="dragMoved($event)"
-            [style.position]="'absolute'"
-            [style.top.px]="calculateAppointmentPosition(appointment.startTime)"
-            [style.height.px]="calculateAppointmentHeight(appointment.startTime, appointment.endTime)"
-            [style.width]="'calc(100% - 8px)'">
-            <div class="drag-placeholder" *cdkDragPlaceholder></div>
+      <ng-container *ngIf="currentDate$ | async as currentDate">
+        <div
+          class="day-content-column"
+          [id]="'day-' + currentDate.getTime()"
+          [cdkDropListData]="currentDate"
+          cdkDropList
+          [cdkDropListSortingDisabled]="true"
+          (cdkDropListDropped)="onDrop($event)">
+          <ng-container *ngIf="getAppointmentsForDate(currentDate) | async as dateAppointments">
+            <app-calendar-cell
+              *ngFor="let appointment of dateAppointments"
+              [appointment]="appointment"
+              cdkDrag
+              [cdkDragData]="appointment"
+              cdkDragBoundary=".day-content-column"
+              (cdkDragStarted)="dragStarted($event, appointment)"
+              (cdkDragMoved)="dragMoved($event)"
+              [style.position]="'absolute'"
+              [style.top.px]="calculateAppointmentPosition(appointment.startTime)"
+              [style.height.px]="calculateAppointmentHeight(appointment.startTime, appointment.endTime)"
+              [style.width]="'calc(100% - 8px)'">
+              <div class="drag-placeholder" *cdkDragPlaceholder></div>
 
-            <!-- Use custom drag preview with better initial positioning -->
-            <ng-template cdkDragPreview [matchSize]="true" [cdkDragPreviewOffset]="{x: 0, y: 0}">
-              <div class="no-transition">
-                <app-calendar-cell
-                  [appointment]="appointment"
-                  [style.height.px]="calculateAppointmentHeight(appointment.startTime, appointment.endTime)"
-                  [style.width]="'calc(100% - 8px)'">
-                </app-calendar-cell>
-              </div>
-            </ng-template>
-          </app-calendar-cell>
-        </ng-container>
-      </div>
+              <!-- Use custom drag preview with better initial positioning -->
+              <ng-template cdkDragPreview [matchSize]="true" [cdkDragPreviewOffset]="{x: 0, y: 0}">
+                <div class="no-transition">
+                  <app-calendar-cell
+                    [appointment]="appointment"
+                    [style.height.px]="calculateAppointmentHeight(appointment.startTime, appointment.endTime)"
+                    [style.width]="'calc(100% - 8px)'">
+                  </app-calendar-cell>
+                </div>
+              </ng-template>
+            </app-calendar-cell>
+          </ng-container>
+        </div>
+      </ng-container>
     </div>
   </ng-container>
 </div>
